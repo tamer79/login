@@ -1,0 +1,2 @@
+[phases.setup]
+nixPkgs = ["openssl", "gcc", "python312Packages.bcrypt"]
