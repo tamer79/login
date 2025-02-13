@@ -1,10 +1,12 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import SessionLocal, engine, Base, User, hash_password, verify_password
+from database import SessionLocal, engine, Base
+from models import User  # ✅ Importando o modelo User do novo arquivo models.py
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
+from security import hash_password, verify_password
 import os
 import psycopg2
 
