@@ -3,15 +3,16 @@ nixPkgs = ["openssl", "gcc", "python311", "libffi"]
 
 [phases.install]
 cmds = [
-    "rm -rf /app/venv",  # Remove qualquer ambiente virtual antigo
-    "python3 -m venv /app/venv",  # Cria um novo ambiente virtual
-    "/app/venv/bin/python -m pip install --upgrade pip setuptools wheel",
+    "python3 -m ensurepip --default-pip",  # Garante que o pip está instalado
+    "python3 -m pip install --upgrade pip setuptools wheel",  # Atualiza pip
+    "python3 -m venv /app/venv",  # Cria o ambiente virtual corretamente
     "/app/venv/bin/python -m pip install -r requirements.txt",
     "/app/venv/bin/python -m pip install uvicorn"
 ]
 
 [phases.start]
 cmds = [
-    "ls -l /app/venv/bin/",  # Verifica se os arquivos estão presentes
+    "ls -l /app/venv/",  # Verifica se o ambiente virtual foi criado corretamente
+    "ls -l /app/venv/bin/",  # Verifica se os binários do Python estão presentes
     "/app/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000"
 ]
