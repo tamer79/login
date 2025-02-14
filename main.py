@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine, Base
 from models import User
@@ -187,7 +187,7 @@ oauth.register(
 
 # 📌 Endpoint para login via Google
 @app.get("/auth/google")
-async def login_google():
+async def login_google(request: Request):  # Corrigido
     return await oauth.google.authorize_redirect(request, redirect_uri="http://localhost:8000/auth/google/callback")
 
 @app.get("/auth/google/callback")
@@ -198,7 +198,7 @@ async def google_callback(request: Request, db: Session = Depends(get_db)):
 
 # 📌 Endpoint para login via Apple
 @app.get("/auth/apple")
-async def login_apple():
+async def login_apple(request: Request):  # Corrigido
     return await oauth.apple.authorize_redirect(request, redirect_uri="http://localhost:8000/auth/apple/callback")
 
 @app.get("/auth/apple/callback")
@@ -209,7 +209,7 @@ async def apple_callback(request: Request, db: Session = Depends(get_db)):
 
 # 📌 Endpoint para login via WeChat
 @app.get("/auth/wechat")
-async def login_wechat():
+async def login_wechat(request: Request):  # Corrigido
     return await oauth.wechat.authorize_redirect(request, redirect_uri="http://localhost:8000/auth/wechat/callback")
 
 @app.get("/auth/wechat/callback")
