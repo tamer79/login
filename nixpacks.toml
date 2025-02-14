@@ -5,13 +5,11 @@ nixPkgs = ["openssl", "gcc", "python311", "libffi"]
 cmds = [
     "python3 -m venv /app/venv",
     "/app/venv/bin/pip install --upgrade pip",
-    "/app/venv/bin/pip install -r requirements.txt"
+    "/app/venv/bin/pip install -r requirements.txt",
+    "/app/venv/bin/pip install uvicorn"
 ]
-
-[phases.build]
-cmds = []
 
 [phases.start]
 cmds = [
-    "/app/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000"
+    "/app/venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000"
 ]
