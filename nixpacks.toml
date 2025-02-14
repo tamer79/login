@@ -4,9 +4,9 @@ nixPkgs = ["openssl", "gcc", "python311", "libffi"]
 [phases.install]
 cmds = [
     "python3 -m venv /app/venv",
-    "/app/venv/bin/pip install --upgrade pip",
-    "/app/venv/bin/pip install -r requirements.txt",
-    "/app/venv/bin/pip install uvicorn"
+    "/app/venv/bin/python -m pip install --upgrade pip",
+    "/app/venv/bin/python -m pip install -r requirements.txt",
+    "/app/venv/bin/python -m pip install uvicorn"
 ]
 
 [phases.start]
