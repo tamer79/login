@@ -1,2 +1,2 @@
 [phases.setup]
-nixPkgs = ["openssl", "gcc", "python312"]
+nixPkgs = ["openssl", "gcc", "python311", "libffi"]
