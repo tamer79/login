@@ -3,10 +3,15 @@ nixPkgs = ["openssl", "gcc", "python311", "libffi"]
 
 [phases.install]
 cmds = [
-    "python3 -m ensurepip --default-pip",  # Garante que o pip está instalado
-    "python3 -m pip install --upgrade pip setuptools wheel",  # Atualiza pip
-    "python3 -m pip install -r requirements.txt",  # Instala os pacotes necessários
-    "python3 -m pip install uvicorn"  # Garante que o Uvicorn está instalado
+    "python3 -m ensurepip --default-pip",  
+    "python3 -m pip install --upgrade pip setuptools wheel",  
+    "python3 -m pip install -r requirements.txt",  
+    "python3 -m pip install uvicorn"
+]
+
+[phases.build]
+cmds = [
+    "python3 -m pip install uvicorn"  # 🔥 Instalar Uvicorn na fase de build
 ]
 
 [phases.start]
