@@ -14,3 +14,11 @@ if not DATABASE_URL:
 engine = create_engine(DATABASE_URL, pool_pre_ping=True, poolclass=NullPool)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+# 🔄 Garante que as tabelas do banco de dados sejam criadas/atualizadas automaticamente
+def init_db():
+    from models import Base  # Importação interna para evitar problemas de importação circular
+    Base.metadata.create_all(bind=engine)
+
+# Chamando a função ao iniciar o banco de dados
+init_db()

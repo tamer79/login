@@ -152,3 +152,89 @@ def test_db():
         return {"status": "✅ Conexão bem-sucedida ao PostgreSQL!"}
     except Exception as e:
         return {"status": "❌ Erro ao conectar", "error": str(e)}
+
+from authlib.integrations.starlette_client import OAuth
+import httpx
+
+# 🔐 Configuração dos provedores OAuth
+oauth = OAuth()
+oauth.register(
+    name='google',
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    authorize_url="https://accounts.google.com/o/oauth2/auth",
+    access_token_url="https://oauth2.googleapis.com/token",
+    client_kwargs={"scope": "openid email profile"},
+)
+
+oauth.register(
+    name='apple',
+    client_id=os.getenv("APPLE_CLIENT_ID"),
+    client_secret=os.getenv("APPLE_CLIENT_SECRET"),
+    authorize_url="https://appleid.apple.com/auth/authorize",
+    access_token_url="https://appleid.apple.com/auth/token",
+    client_kwargs={"scope": "name email"},
+)
+
+oauth.register(
+    name='wechat',
+    client_id=os.getenv("WECHAT_CLIENT_ID"),
+    client_secret=os.getenv("WECHAT_CLIENT_SECRET"),
+    authorize_url="https://open.weixin.qq.com/connect/qrconnect",
+    access_token_url="https://api.weixin.qq.com/sns/oauth2/access_token",
+    client_kwargs={"scope": "snsapi_login"},
+)
+
+# 📌 Endpoint para login via Google
+@app.get("/auth/google")
+async def login_google():
+    return await oauth.google.authorize_redirect(request, redirect_uri="http://localhost:8000/auth/google/callback")
+
+@app.get("/auth/google/callback")
+async def google_callback(request: Request, db: Session = Depends(get_db)):
+    token = await oauth.google.authorize_access_token(request)
+    user_info = token.get("userinfo")
+    return await handle_oauth_user(user_info, "google", db)
+
+# 📌 Endpoint para login via Apple
+@app.get("/auth/apple")
+async def login_apple():
+    return await oauth.apple.authorize_redirect(request, redirect_uri="http://localhost:8000/auth/apple/callback")
+
+@app.get("/auth/apple/callback")
+async def apple_callback(request: Request, db: Session = Depends(get_db)):
+    token = await oauth.apple.authorize_access_token(request)
+    user_info = token.get("userinfo")
+    return await handle_oauth_user(user_info, "apple", db)
+
+# 📌 Endpoint para login via WeChat
+@app.get("/auth/wechat")
+async def login_wechat():
+    return await oauth.wechat.authorize_redirect(request, redirect_uri="http://localhost:8000/auth/wechat/callback")
+
+@app.get("/auth/wechat/callback")
+async def wechat_callback(request: Request, db: Session = Depends(get_db)):
+    token = await oauth.wechat.authorize_access_token(request)
+    user_info = token.get("userinfo")
+    return await handle_oauth_user(user_info, "wechat", db)
+
+# 🔄 Função auxiliar para processar usuários autenticados via OAuth
+async def handle_oauth_user(user_info, provider, db: Session):
+    if not user_info:
+        raise HTTPException(status_code=400, detail="Erro ao autenticar usuário")
+    
+    email = user_info.get("email")
+    username = user_info.get("name") or email.split("@")[0]
+
+    # Verifica se o usuário já existe no banco
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        # Criar novo usuário
+        user = User(username=username, email=email, hashed_password="oauth_user", provider=provider)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    # Retorna um token JWT para o usuário autenticado
+    access_token = create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
