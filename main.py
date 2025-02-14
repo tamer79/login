@@ -37,7 +37,7 @@ class UserCreate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    username: str
+    username: str  # Mantendo o nome original, mas agora pode ser username ou email
     password: str
 
 
@@ -83,15 +83,25 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     return {"message": "Usuário registrado com sucesso"}
 
 
-# 🔐 Rota de Login com Geração de Tokens
+# 🔐 Função para autenticar usuário por username ou email
+def authenticate_user(db: Session, login: str, password: str):
+    user = db.query(User).filter((User.username == login) | (User.email == login)).first()
+
+    if not user or not verify_password(password, user.hashed_password):
+        return None
+    return user
+
+
+# 🔐 Rota de Login com Geração de Tokens (Agora aceita username ou email)
 @app.post("/login", response_model=Token)
 def login(user: UserLogin, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.username == user.username).first()
-    if not existing_user or not verify_password(user.password, existing_user.hashed_password):
+    existing_user = authenticate_user(db, user.username, user.password)  # Alterado para aceitar username ou email
+
+    if not existing_user:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
-    access_token = create_access_token({"sub": user.username}, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    refresh_token = create_access_token({"sub": user.username}, timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
+    access_token = create_access_token({"sub": existing_user.username}, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    refresh_token = create_access_token({"sub": existing_user.username}, timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
 
     return {
         "access_token": access_token,
