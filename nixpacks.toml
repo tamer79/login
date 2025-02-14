@@ -1,20 +1,16 @@
 [phases.setup]
-nixPkgs = ["openssl", "gcc", "python311", "libffi"]
+nixPkgs = ["python311", "openssl", "gcc", "libffi"]
 
 [phases.install]
 cmds = [
-    "python3 -m ensurepip --default-pip",  
-    "python3 -m pip install --upgrade pip setuptools wheel",  
-    "python3 -m pip install -r requirements.txt",  
-    "python3 -m pip install uvicorn"
+    "python3 -m ensurepip --default-pip",
+    "python3 -m pip install --upgrade pip setuptools wheel",
+    "python3 -m pip install -r requirements.txt"
 ]
 
 [phases.build]
-cmds = [
-    "python3 -m pip install uvicorn"  # 🔥 Instalar Uvicorn na fase de build
-]
+cmds = ["python3 -m pip install gunicorn uvicorn"]
 
-[phases.start]
-cmds = [
-    "python3 -m uvicorn main:app --host 0.0.0.0 --port 8000"
-]
+[start]
+cmd = "gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:8000"
+git add .
