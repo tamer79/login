@@ -28,10 +28,22 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Simulação de banco de dados (substitua pelo banco de dados real)
-fake_users_db = {
-    "tamer79": {"username": "tamer79", "email": "tamer79@email.com", "hashed_password": pwd_context.hash("1234")}
-}
+# 🔹 Simulação de banco de dados com usuário fixo e senha hasheada corretamente
+fake_users_db = {}
+
+def create_default_user():
+    username = "tamer79"
+    email = "tamer79@email.com"
+    password = "e2evfMBeP"  # Senha real
+
+    if username not in fake_users_db:
+        fake_users_db[username] = {
+            "username": username,
+            "email": email,
+            "hashed_password": pwd_context.hash(password)
+        }
+
+create_default_user()  # Adiciona um usuário ao iniciar a API
 
 # Modelos de resposta da API
 class UserResponse(BaseModel):
@@ -59,11 +71,19 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# Endpoint de login
+# 🔹 Correção no endpoint de login
 @app.post("/login", response_model=Token)
 def login(user: UserLogin):
     user_data = fake_users_db.get(user.username)
-    if not user_data or not verify_password(user.password, user_data["hashed_password"]):
+
+    if not user_data:
+        raise HTTPException(status_code=401, detail="Usuário não encontrado")
+
+    # Debug: Verificar as senhas no log
+    print(f"Senha fornecida: {user.password}")
+    print(f"Senha armazenada (hash): {user_data['hashed_password']}")
+
+    if not verify_password(user.password, user_data["hashed_password"]):
         raise HTTPException(status_code=401, detail="Usuário ou senha incorretos")
 
     access_token = create_access_token(data={"sub": user.username})
