@@ -28,7 +28,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# 🔹 Simulação de banco de dados com usuário fixo e senha hasheada corretamente
+# Simulação de banco de dados com usuário fixo e senha hasheada corretamente
 fake_users_db = {}
 
 def create_default_user():
@@ -51,7 +51,7 @@ class UserResponse(BaseModel):
     email: str
 
 class UserLogin(BaseModel):
-    username: str
+    username: str  # Pode ser username ou email
     password: str
 
 class Token(BaseModel):
@@ -71,10 +71,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# 🔹 Correção no endpoint de login
+# 🔹 Correção no endpoint de login para aceitar username ou email
 @app.post("/login", response_model=Token)
 def login(user: UserLogin):
-    user_data = fake_users_db.get(user.username)
+    user_data = None
+
+    # 🔹 Verifica se o usuário forneceu username ou e-mail
+    for key, value in fake_users_db.items():
+        if user.username == value["username"] or user.username == value["email"]:
+            user_data = value
+            break
 
     if not user_data:
         raise HTTPException(status_code=401, detail="Usuário não encontrado")
@@ -86,12 +92,12 @@ def login(user: UserLogin):
     if not verify_password(user.password, user_data["hashed_password"]):
         raise HTTPException(status_code=401, detail="Usuário ou senha incorretos")
 
-    access_token = create_access_token(data={"sub": user.username})
-    refresh_token = create_access_token(data={"sub": user.username}, expires_delta=timedelta(days=7))
+    access_token = create_access_token(data={"sub": user_data["username"]})
+    refresh_token = create_access_token(data={"sub": user_data["username"]}, expires_delta=timedelta(days=7))
 
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
-# 🔹 Novo endpoint para obter informações do usuário autenticado
+# Endpoint para obter informações do usuário autenticado
 @app.get("/me", response_model=UserResponse)
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
