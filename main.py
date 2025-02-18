@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
-from typing import Optional
+from typing import Optional, Union
 from starlette.middleware.cors import CORSMiddleware
 from authlib.integrations.starlette_client import OAuth
 from starlette.responses import RedirectResponse
@@ -35,7 +35,7 @@ fake_users_db = {}
 
 def create_default_user():
     username = "tamer79"
-    email = "tamer79@email.com"
+    email = "tamer79@gmail.com"
     password = "e2evfMBeP"
     
     if username not in fake_users_db:
@@ -53,7 +53,7 @@ class UserResponse(BaseModel):
     email: str
 
 class UserLogin(BaseModel):
-    username: str
+    login: str  # Aceita tanto username quanto email
     password: str
 
 class Token(BaseModel):
@@ -76,7 +76,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def login(user: UserLogin):
     user_data = None
     for key, value in fake_users_db.items():
-        if user.username == value["username"] or user.username == value["email"]:
+        if user.login == value["username"] or user.login == value["email"]:  # Aceita login via username ou email
             user_data = value
             break
     
