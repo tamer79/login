@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
@@ -164,3 +164,28 @@ async def login_wechat(request: Request):
 async def auth_wechat(request: Request):
     token = await oauth.wechat.authorize_access_token(request)
     return token
+
+# 📌 Rota para registrar um novo usuário
+class UserCreate(BaseModel):
+    apelido: str
+    email: EmailStr
+    senha: str
+
+@app.post("/register")
+def register_user(user: UserCreate):
+    # Verificar se o e-mail já existe
+    for value in fake_users_db.values():
+        if value["email"] == user.email:
+            raise HTTPException(status_code=400, detail="E-mail já registrado")
+
+    # Criar novo usuário com senha criptografada
+    hashed_password = pwd_context.hash(user.senha)
+    new_user = {
+        "username": user.apelido,
+        "email": user.email,
+        "hashed_password": hashed_password
+    }
+    
+    fake_users_db[user.apelido] = new_user
+
+    return {"message": "Usuário registrado com sucesso"}
