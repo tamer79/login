@@ -72,20 +72,27 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+# 📌 Atualização: Login agora reconhece usuários registrados
 @app.post("/login", response_model=Token)
 def login(user: UserLogin):
-    user_data = None
-    for key, value in fake_users_db.items():
-        if user.login == value["username"] or user.login == value["email"]:  # Aceita login via username ou email
-            user_data = value
-            break
+    user_data = fake_users_db.get(user.login)  # Buscar usuário pelo apelido
     
+    # Se não encontrar pelo apelido, buscar pelo e-mail
+    if not user_data:
+        for key, value in fake_users_db.items():
+            if user.login == value["email"]:
+                user_data = value
+                break
+    
+    # Se usuário não for encontrado
     if not user_data:
         raise HTTPException(status_code=401, detail="Usuário não encontrado")
     
+    # Verificar senha
     if not verify_password(user.password, user_data["hashed_password"]):
         raise HTTPException(status_code=401, detail="Usuário ou senha incorretos")
     
+    # Criar tokens JWT
     access_token = create_access_token(data={"sub": user_data["username"]})
     refresh_token = create_access_token(data={"sub": user_data["username"]}, expires_delta=timedelta(days=7))
     
