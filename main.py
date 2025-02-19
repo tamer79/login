@@ -180,6 +180,10 @@ class UserCreate(BaseModel):
 
 @app.post("/register")
 def register_user(user: UserCreate):
+    # Verificar se o apelido já existe
+    if user.apelido in fake_users_db:
+        raise HTTPException(status_code=400, detail="Apelido já registrado")
+
     # Verificar se o e-mail já existe
     for value in fake_users_db.values():
         if value["email"] == user.email:
